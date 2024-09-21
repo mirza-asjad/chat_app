@@ -11,24 +11,30 @@ class CollectionKey {
 }
 
 class UserKey {
-  static const USER_NAME = 'userName';
-  static const USER_EMAIL = 'userEmail';
-  static const PHONE_NUMBER = 'userPhoneNumber';
-  static const PASSWORD = 'userPassword';
-  static const CREATED_AT = 'userCreatedAt';
-  static const FCMTOKEN = 'userFcmToken';
-  static const SEARCH_PARAMS_FOR_NAME = 'userSearchParamsForName';
-  static const SEARCH_PARAMS_FOR_NUMBER = 'userSearchParamsForNumber';
-  static const UID = 'userUid';
-  static const USER_SIGNUP_METHOD = 'userSignupMethod';
+  static const String UID = "uid";
+  static const String USER_EMAIL = "email";
+  static const String PHONE_NUMBER = "phoneNumber";
+  static const String CREATED_AT = "createdAt";
+  static const String FCMTOKEN = "fcmTokens";
+  static const String USER_NAME = "name";
+  static const String USER_SIGNUP_METHOD = "userSignupMethod";
+  static const String PROFILE_IMAGE_URL = "profileImageUrl"; // New key for profile image URL
+  static const String LAST_ONLINE = "lastOnline"; // New key for last online timestamp
+  static const String LAST_MESSAGE = "lastMessage"; // New key for last message
+  // Updated constant (fixed typo)
   static const USER_SIGNUP_METHOD_IS_EMAIL = 'Email';
-  static const USER_SIGNUP_METHOD_IS_GOOLE = 'Google';
+  static const USER_SIGNUP_METHOD_IS_GOOGLE = 'Google';
+
+  // Removed CATEGORY and SUB_CATEGORY as requested
+  // Removed IS_USER_CHOOSED_CATEGORY as well
+
   static const IS_DARK_MODE = 'isDarkMode';
-  static const CATEGORY = 'userSelectedCategory';
-  static const SUB_CATEGORY = 'userSelectedSubCategory';
-  static const IS_USER_CHOOSED_CATEGORY = 'isUserChoosedCategory';
   static const CURRENT_CHAT_ID = 'currentChatId';
+
+  // Added new constant(s) based on your auth code
+  static const LOGIN_TIMESTAMP = 'loginTimestamp'; // Assuming you track login time
 }
+
 
 class TopicKey {
   static const CATEGORY = 'userSelectedCategory';

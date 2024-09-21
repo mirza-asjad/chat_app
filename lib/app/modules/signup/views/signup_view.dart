@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:chat_app/app/routes/app_pages.dart';
 import 'package:chat_app/config/app_colors.dart';
 import 'package:chat_app/config/app_images.dart';
@@ -7,6 +9,8 @@ import 'package:chat_app/widgets/customized_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:msh_checkbox/msh_checkbox.dart';
+import 'dart:io'; // Import for File class
+
 import '../controllers/signup_controller.dart';
 
 class SignupView extends GetView<SignupController> {
@@ -31,7 +35,7 @@ class SignupView extends GetView<SignupController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: screenHeight * 0.1),
-            _buildTitle(screenHeight, theme),
+            _buildProfileImagePicker(context, screenHeight),
             SizedBox(height: screenHeight * 0.05),
             _buildHeaderRow(theme),
             SizedBox(height: screenHeight * 0.02),
@@ -119,18 +123,34 @@ class SignupView extends GetView<SignupController> {
     );
   }
 
-  Widget _buildTitle(double screenHeight, ThemeData theme) {
-    final bool isDarkTheme = theme.brightness == Brightness.dark;
-    return Center(
-      child: Image.asset(
-        isDarkTheme ? AppImages.LOGO_ICON : AppImages.LOGO_ICON,
-        width: 100,
-        height: 100,
-        fit: BoxFit.contain,
-      ),
-    );
-  }
+ Widget _buildProfileImagePicker(BuildContext context, double screenHeight) {
+  return Center(
+    child: GestureDetector(
+      onTap: () {
+        controller.pickProfileImage(); // Call the image picker method
+      },
+      child: Obx(() {
+        // Make sure the widget that relies on reactive variables is inside Obx
+        final File? imageFile = controller.getFileFromXFile(controller.pickedImage.value);
 
+        return CircleAvatar(
+          radius: screenHeight * 0.08, // Set radius for the profile image
+          backgroundColor: Colors.grey[300],
+          backgroundImage: controller.pickedImage.value != null
+              ? FileImage(imageFile!) // Only assign FileImage if pickedImage is not null
+              : AssetImage(AppImages.USER_ICON) as ImageProvider,
+          child: controller.pickedImage.value == null
+              ? Icon(
+                  Icons.camera_alt,
+                  size: screenHeight * 0.05,
+                  color: Colors.white,
+                )
+              : null, // Show camera icon when no image is selected
+        );
+      }),
+    ),
+  );
+}
   Widget _buildHeaderRow(ThemeData theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -155,37 +175,36 @@ class SignupView extends GetView<SignupController> {
     );
   }
 
-  Widget _buildTermsAndConditionsCheckbox(
-      ThemeData theme, BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Obx(
-          () => MSHCheckbox(
-            size: 16,
-            value: controller.isTermsAccepted.value,
-            colorConfig: MSHColorConfig.fromCheckedUncheckedDisabled(
-              checkedColor: theme.colorScheme.secondary,
-            ),
-            style: MSHCheckboxStyle.fillScaleColor,
-            onChanged: (selected) {
-              controller.isTermsAccepted.value = selected;
-            },
+Widget _buildTermsAndConditionsCheckbox(ThemeData theme, BuildContext context) {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.start,
+    children: [
+      // Using Obx for reactive checkbox state
+      Obx(
+        () => MSHCheckbox(
+          size: 16,
+          value: controller.isTermsAccepted.value,
+          colorConfig: MSHColorConfig.fromCheckedUncheckedDisabled(
+            checkedColor: theme.colorScheme.secondary,
+          ),
+          style: MSHCheckboxStyle.fillScaleColor,
+          onChanged: (selected) {
+            controller.isTermsAccepted.value = selected;
+          },
+        ),
+      ),
+      SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+      Obx(
+        () => Text(
+          'Accept Terms and Conditions',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: controller.isTermsAccepted.value
+                ? theme.colorScheme.onSurface.withOpacity(0.7)
+                : AppColors.RED_COLOR, // Change text color based on checkbox state
           ),
         ),
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        Obx(
-          () => Text(
-            'Accept Terms and Conditions',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: controller.isTermsAccepted.value
-                  ? theme.colorScheme.onSurface.withOpacity(0.7)
-                  : AppColors
-                      .RED_COLOR, // Change text color based on checkbox state
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 }

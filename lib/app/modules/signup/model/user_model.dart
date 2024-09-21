@@ -10,10 +10,9 @@ class UserModel {
       fcmTokens; // Optional field for a list of Firebase Cloud Messaging tokens
   final String? name; // Optional field
   final String? userSignupMethod; // Optional field for signup method
-  final String?
-      userSelectedCategory; // New optional field for selected category
-  final String?
-      userSelectedSubCategory; // New optional field for selected subcategory
+  final String? profileImageUrl; // New optional field for profile image URL
+  final DateTime? lastOnline; // New optional field for last online timestamp
+  final String? lastMessage; // New optional field for last message, defaults to "No messages yet"
 
   UserModel({
     this.uid,
@@ -23,10 +22,12 @@ class UserModel {
     this.fcmTokens,
     this.name,
     this.userSignupMethod,
-    this.userSelectedCategory, // Initialize the new field
-    this.userSelectedSubCategory, // Initialize the new field
+    this.profileImageUrl, // Initialize profile image field
+    this.lastOnline, // Initialize last online field
+    this.lastMessage = "No messages yet", // Initialize with default value
   });
 
+  // Factory method to create a UserModel from Firestore document
   factory UserModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     Map<String, dynamic> data = doc.data()!;
     return UserModel(
@@ -41,12 +42,15 @@ class UserModel {
           .toList(),
       name: data[UserKey.USER_NAME],
       userSignupMethod: data[UserKey.USER_SIGNUP_METHOD],
-      userSelectedCategory: data[UserKey.CATEGORY], // Extract the new field
-      userSelectedSubCategory:
-          data[UserKey.SUB_CATEGORY], // Extract the new field
+      profileImageUrl: data[UserKey.PROFILE_IMAGE_URL], // Extract profile image
+      lastOnline: data[UserKey.LAST_ONLINE] != null
+          ? (data[UserKey.LAST_ONLINE] as Timestamp).toDate()
+          : null, // Extract and convert lastOnline timestamp
+      lastMessage: data[UserKey.LAST_MESSAGE] ?? "No messages yet", // Extract last message with default value
     );
   }
 
+  // Method to convert UserModel to Firestore data (for saving/updating)
   Map<String, dynamic> toMap() {
     final Map<String, dynamic> data = {};
     if (uid != null) data[UserKey.UID] = uid;
@@ -60,11 +64,14 @@ class UserModel {
     if (userSignupMethod != null) {
       data[UserKey.USER_SIGNUP_METHOD] = userSignupMethod;
     }
-    if (userSelectedCategory != null) {
-      data[UserKey.CATEGORY] = userSelectedCategory;
+    if (profileImageUrl != null) {
+      data[UserKey.PROFILE_IMAGE_URL] = profileImageUrl;
     }
-    if (userSelectedSubCategory != null) {
-      data[UserKey.SUB_CATEGORY] = userSelectedSubCategory;
+    if (lastOnline != null) {
+      data[UserKey.LAST_ONLINE] = Timestamp.fromDate(lastOnline!);
+    }
+    if (lastMessage != null) {
+      data[UserKey.LAST_MESSAGE] = lastMessage;
     }
 
     return data;

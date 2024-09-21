@@ -1,14 +1,18 @@
+import 'dart:developer';
+import 'dart:io';
+
 import 'package:chat_app/app/routes/app_pages.dart';
 import 'package:chat_app/services/auth_service.dart';
 import 'package:chat_app/services/push_notification_service.dart';
-
 import 'package:chat_app/widgets/customized_snack_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart'; // Import for image picking
 
 class SignupController extends GetxController {
   final AuthService _authService = AuthService();
+
   RxBool isTermsAccepted = false.obs;
   RxBool isLoading = false.obs;
   RxBool isGoogleLoading = false.obs;
@@ -24,6 +28,7 @@ class SignupController extends GetxController {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   final nameController = TextEditingController();
+  final profileImageController = TextEditingController(); // Controller for Profile Image URL
 
   // Error messages
   RxString emailError = ''.obs;
@@ -31,6 +36,34 @@ class SignupController extends GetxController {
   RxString confirmPasswordError = ''.obs;
   RxString phoneError = ''.obs;
   RxString nameError = ''.obs;
+  RxString profileImageError = ''.obs; // Error handling for Profile Image
+
+  Rx<XFile?> pickedImage = Rx<XFile?>(null);
+
+  final ImagePicker _imagePicker = ImagePicker();
+
+  Future<void> pickProfileImage() async {
+    final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      pickedImage.value = image;
+      log('Picked image: ${pickedImage.value?.path}');
+    } else {
+      log('No image selected');
+    }
+  }
+
+ // Method to convert XFile to File
+  File? getFileFromXFile(XFile? xfile) {
+    if (xfile != null && xfile.path.isNotEmpty) {
+      log("Converting XFile to File: ${xfile.path}");
+      return File(xfile.path); // Ensure the path is correctly used here
+    } else {
+      log("Invalid XFile or path");
+      return null;
+    }
+  }
+
+  
   bool validateFields() {
     bool isValid = true;
 
@@ -40,6 +73,7 @@ class SignupController extends GetxController {
     confirmPasswordError.value = '';
     phoneError.value = '';
     nameError.value = '';
+    profileImageError.value = ''; // Clear Profile Image Error
 
     // Email validation
     if (emailController.text.isEmpty) {
@@ -49,15 +83,11 @@ class SignupController extends GetxController {
       emailError.value = 'Invalid Email Format (i.e. developer@gmail.com)';
       isValid = false;
     } else {
-      // Proceed with other validations if email is valid
-
       // Name validation
       if (nameController.text.isEmpty) {
         nameError.value = 'Please Enter Name';
         isValid = false;
       } else {
-        // Proceed with other validations if name is valid
-
         // Phone validation
         if (phoneController.text.isEmpty) {
           phoneError.value = 'Please Enter Phone Number';
@@ -66,8 +96,6 @@ class SignupController extends GetxController {
           phoneError.value = 'Invalid Format (e.g., +1 (555) 555-5555)';
           isValid = false;
         } else {
-          // Proceed with other validations if phone number is valid
-
           // Password validation
           if (passwordController.text.isEmpty) {
             passwordError.value = 'Please Enter Password';
@@ -76,14 +104,11 @@ class SignupController extends GetxController {
             passwordError.value = 'Password must be at least 6 characters';
             isValid = false;
           } else {
-            // Proceed with other validations if password is valid
-
             // Confirm password validation
             if (confirmPasswordController.text.isEmpty) {
               confirmPasswordError.value = 'Please Enter Your Password Again';
               isValid = false;
-            } else if (confirmPasswordController.text !=
-                passwordController.text) {
+            } else if (confirmPasswordController.text != passwordController.text) {
               confirmPasswordError.value = "Passwords don't match";
               isValid = false;
             }
@@ -100,74 +125,69 @@ class SignupController extends GetxController {
     return isValid;
   }
 
-  Future<void> signUp(BuildContext context) async {
+    Future<void> signUp(BuildContext context) async {
     if (validateFields()) {
       try {
-        // Set isLoading to true
         isLoading.value = true;
-
-        // Request permission and get FCM token
         String fcmToken = await FCMManager.getFCMToken();
-
+        File? filepath = getFileFromXFile(pickedImage.value);
         User? user = await _authService.signUp(
           email: emailController.text,
           name: nameController.text,
           password: passwordController.text,
           phoneNumber: phoneController.text,
           fcmToken: [fcmToken],
+          profileImagePath: filepath, // This could be null
         );
 
         if (user != null) {
-          // // Set isLoggedin to true in SharedPreferences
-          // await AppPreferences.setUserLoggedIn(true);
-          // Navigate to the next screen after signup
+          log("User signed up successfully: ${user.email}");
           Get.offAllNamed(Routes.HOME);
-        }
-      } on AuthException catch (e) {
-        // Handle specific auth errors
-        if (e.code == 'email-already-in-use') {
-          emailError.value = 'Email is already in use';
         } else {
-          SnackbarUtils.showErrorSnackbar(
-            title: 'Error',
-            message: e.message ?? 'An error occurred',
-            context: context,
-          );
+          log("User sign-up failed");
         }
       } catch (e) {
+        log('Error during sign-up: $e');
         SnackbarUtils.showErrorSnackbar(
           title: 'Error',
           message: e.toString(),
           context: context,
         );
       } finally {
-        // Set isLoading to false regardless of success or failure
         isLoading.value = false;
       }
+    } else {
+      log("Validation failed");
     }
   }
+
 
   Future<void> googleSignUp(BuildContext context) async {
     try {
       isGoogleLoading.value = true;
+
       // Request permission and get FCM token
       String fcmToken = await FCMManager.getFCMToken();
-      User? user = await _authService.googleSignIn(fcmToken: [fcmToken]);
-      if (user != null) {
-        // // Set isLoggedin to true in SharedPreferences
-        // await AppPreferences.setUserLoggedIn(true);
+      
+      User? user = await _authService.googleSignIn(
+        fcmToken: [fcmToken],
+      );
 
-        // Navigate to the next screen on successful login
+      if (user != null) {
         Get.offAllNamed(Routes.HOME);
       } else {
-        // Handle sign-in failure (if needed)
         SnackbarUtils.showErrorSnackbar(
-            title: 'Authenication Error',
-            message: 'Unable to connect with Google',
-            context: context);
+          title: 'Authentication Error',
+          message: 'Unable to connect with Google',
+          context: context,
+        );
       }
     } catch (e) {
-      // Handle errors from Google sign-in if needed
+      SnackbarUtils.showErrorSnackbar(
+        title: 'Error',
+        message: e.toString(),
+        context: context,
+      );
     } finally {
       isGoogleLoading.value = false;
     }
@@ -175,11 +195,12 @@ class SignupController extends GetxController {
 
   @override
   void onClose() {
-    // Dispose the controllers when the controller is closed
     emailController.dispose();
     phoneController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    nameController.dispose();
+    profileImageController.dispose(); // Dispose profile image controller
     super.onClose();
   }
 }

@@ -14,6 +14,8 @@ abstract class Routes {
   static const SELECTION = _Paths.SELECTION;
   static const PRIVACY_POLICY = _Paths.PRIVACY_POLICY;
   static const TERMS_AND_CONDITIONS = _Paths.TERMS_AND_CONDITIONS;
+  static const CHATLIST_VIEW = _Paths.CHATLIST_VIEW;
+  static const CHATSCREEN = _Paths.CHATSCREEN;
 }
 
 abstract class _Paths {
@@ -29,4 +31,6 @@ abstract class _Paths {
   static const SELECTION = '/selection';
   static const PRIVACY_POLICY = '/privacy-policy';
   static const TERMS_AND_CONDITIONS = '/terms-and-conditions';
+  static const CHATLIST_VIEW = '/chatlist-view';
+  static const CHATSCREEN = '/chatscreen';
 }
