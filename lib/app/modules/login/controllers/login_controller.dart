@@ -94,7 +94,7 @@ class LoginController extends GetxController {
         // Handle sign-in failure (if needed)
         SnackbarUtils.showErrorSnackbar(
           title: 'Authentication Error',
-          message: 'User already exists',
+          message: 'Unable to connect to Google',
           context: context, //this can lead to error
         );
       }

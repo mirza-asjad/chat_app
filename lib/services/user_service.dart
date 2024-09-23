@@ -124,19 +124,6 @@ class UserService extends BaseService<UserModel> {
     }
   }
 
-  Future<void> saveUserSelection(
-      String uid, String? selectedCategory, String? selectedSubcategory) async {
-    try {
-      await ref.doc(uid).update({
-        TopicKey.CATEGORY: selectedCategory,
-        TopicKey.SUB_CATEGORY: selectedSubcategory,
-      });
-    } catch (e, stacktrace) {
-      log('Error saving user selection: $e',
-          name: 'saveUserSelection', error: e, stackTrace: stacktrace);
-    }
-  }
-
   Future<UserModel?> getUserInfo(String uid) async {
     try {
       DocumentSnapshot<UserModel> doc = await ref.doc(uid).get();

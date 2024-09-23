@@ -101,13 +101,20 @@ class AuthService {
   }
 
   //google signin
+
   Future<User?> googleSignIn({required List<String> fcmToken}) async {
     try {
-      // Step 1: Sign in with Google
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      // Step 1: Attempt Google Sign-In and retrieve authentication tokens
+      GoogleSignInAccount? googleUser = await GoogleSignIn(
+        scopes: ["profile", "email"],
+      ).signIn();
+
       if (googleUser == null) {
-        return null;
+        log('Google sign-in canceled by user.');
+        return null; // Sign-in was aborted
       }
+
+      GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       log('Google sign-in successful. User email: ${googleUser.email}');
 
       final normalizedEmail = googleUser.email.toLowerCase();
@@ -144,11 +151,7 @@ class AuthService {
         log('User does not exist in Firestore. Proceeding with Google sign-in.');
       }
 
-      // Step 5: Proceed with Google sign-in
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-      log('Google authentication successful. Access token: ${googleAuth.accessToken}, ID token: ${googleAuth.idToken}');
-
+      // Step 5: Proceed with Google sign-in using the authentication credentials
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -173,7 +176,7 @@ class AuthService {
         log('New user added to Firestore: ${user.email}');
       }
 
-      // Step 7: Update FCM tokens if needed
+      // Step 7: Update FCM tokens for existing users
       if (user != null && userExists) {
         await _userService.updateFCMTokens(user.uid, fcmToken);
         log('Updated FCM tokens for user: ${user.email}');
